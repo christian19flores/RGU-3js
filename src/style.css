@@ -1,0 +1,30 @@
+*
+{
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body
+{
+    overflow: hidden;
+}
+
+.webgl
+{
+    position: fixed;
+    top: 0;
+    left: 0;
+    outline: none;
+}
+
+#dice-roll {
+    color: #fff;
+    position: absolute;
+    top: 10px;
+    left: 100px;
+    width: 100%;
+    text-align: center;
+    z-index: 100;
+    display: block;
+}
