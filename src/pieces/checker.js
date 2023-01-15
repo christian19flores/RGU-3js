@@ -12,6 +12,7 @@ export default function checker(x, y, z, player, count) {
     checkerMesh.player = player;
     checkerMesh.name = 'checker';
     checkerMesh.index = count;
+    checkerMesh.board_position = 0;
 
     //checker.add(checkerMesh);
     return checkerMesh;

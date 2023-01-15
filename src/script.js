@@ -376,11 +376,13 @@ function init() {
     }
 
 
-    game_state.player[0].checkers.push(new Checker(0, 10, 10, 0, 0))
-    scene.add(game_state.player[0].checkers[0]);
+    for (let i = 0; i <= 7; i++) {
+        game_state.player[0].checkers.push(new Checker(10, i * 2, 10, 0, i))
+        scene.add(game_state.player[0].checkers[i]);
 
-    game_state.player[1].checkers.push(new Checker(0, 10, -10, 1, 0));
-    scene.add(game_state.player[1].checkers[0]);
+        game_state.player[1].checkers.push(new Checker(10, i * 2, -10, 1, i));
+        scene.add(game_state.player[1].checkers[i]);
+    }
 
     game_state.temporary_checker = new Checker(0, 100, 10, 0, 0)
     scene.add(game_state.temporary_checker);
@@ -481,6 +483,7 @@ function onDocumentMouseDown(event) {
                 // set checker new position
                 game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].position.x = intersects[0].object.position.x
                 game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].position.z = intersects[0].object.position.z
+                game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].board_position = intersects[0].object.board_position
             }
 
             // unhide checker
@@ -496,17 +499,23 @@ function onDocumentMouseDown(event) {
                 intersects[0].object.callback();
             }
 
+            // If checker and is player's turn
             if (intersects[0].object.name == 'checker') {
-                predictMove(intersects[1].object.board[game_state.player_turn].position)
-                game_state.selected_checker = {
-                    player: intersects[0].object.player,
-                    index: intersects[0].object.index,
-                    name: intersects[0].object.name,
-                    //cube_position: intersects[1].object.board[game_state.player_turn].position,
-                }
+                if (intersects[0].object.player == game_state.player_turn) {
+                    predictMove(intersects[0].object.board_position)
+                    game_state.selected_checker = {
+                        player: intersects[0].object.player,
+                        index: intersects[0].object.index,
+                        name: intersects[0].object.name,
+                        board_position: intersects[0].object.board_position,
+                        //cube_position: intersects[1].object.board[game_state.player_turn].position,
+                    }
 
-                // hide selected checker
-                game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].position.y = 5
+                    // hide selected checker
+                    game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].position.y = 5
+                } else {
+                    console.log('not your turn')
+                }
             }
         }
 
@@ -561,8 +570,10 @@ function update() {
             INTERSECTED = intersects[0].object;
 
             // Move selected checker to box under mouse pointer
+            
             let selected_checker = game_state.selected_checker;
-            if (game_state.selected_checker.name == 'checker') {
+            console.log(selected_checker)
+            if (selected_checker !== null && selected_checker.name == 'checker') {
                 console.log(selected_checker)
                 game_state.temporary_checker.position.x = INTERSECTED.position.x
                 game_state.temporary_checker.position.z = INTERSECTED.position.z
