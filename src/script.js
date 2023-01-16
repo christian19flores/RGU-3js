@@ -480,7 +480,7 @@ function onDocumentMouseDown(event) {
 
         if (game_state.selected_checker) {
             // SET NEW POSITION IF VALID
-            if (isValidMove()) {
+            if (isValidMove() && game_state.dice_rolled) {
                 console.log("valid move")
                 console.log(intersects[2])
                 console.log(intersects[2].object.board[game_state.player_turn].position)
@@ -488,6 +488,12 @@ function onDocumentMouseDown(event) {
                 game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].position.x = intersects[0].object.position.x
                 game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].position.z = intersects[0].object.position.z
                 game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].board_position = intersects[2].object.board[game_state.player_turn].position
+
+                // change player turn
+                game_state.player_turn = game_state.player_turn == 0 ? 1 : 0
+
+                // reset dice
+                game_state.dice_rolled = false
             }
 
             // unhide checker
@@ -499,12 +505,14 @@ function onDocumentMouseDown(event) {
             game_state.predicted_moves = []
             game_state.temporary_checker.position.y = 100
         } else {
-            if (intersects[0].object.name == 'die') {
+            // If die and dice not rolled
+            if (intersects[0].object.name == 'die' && !game_state.dice_rolled) {
                 intersects[0].object.callback();
+                game_state.dice_rolled = true
             }
 
             // If checker and is player's turn
-            if (intersects[0].object.name == 'checker') {
+            if (intersects[0].object.name == 'checker' && game_state.dice_rolled) {
                 if (intersects[0].object.player == game_state.player_turn) {
                     predictMove(intersects[0].object.board_position)
                     game_state.selected_checker = {
