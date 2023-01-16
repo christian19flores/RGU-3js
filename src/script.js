@@ -371,6 +371,7 @@ function init() {
         object.safe = boardCubes[i].safe;
         object.extraMove = boardCubes[i].extraMove;
         object.board = boardCubes[i].board;
+        object.name = 'boardCube';
 
         scene.add(object);
     }
@@ -480,10 +481,13 @@ function onDocumentMouseDown(event) {
         if (game_state.selected_checker) {
             // SET NEW POSITION IF VALID
             if (isValidMove()) {
+                console.log("valid move")
+                console.log(intersects[2])
+                console.log(intersects[2].object.board[game_state.player_turn].position)
                 // set checker new position
                 game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].position.x = intersects[0].object.position.x
                 game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].position.z = intersects[0].object.position.z
-                game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].board_position = intersects[0].object.board_position
+                game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].board_position = intersects[2].object.board[game_state.player_turn].position
             }
 
             // unhide checker
