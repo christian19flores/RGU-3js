@@ -403,6 +403,15 @@ function init() {
         console.log(dice_roll)
         diceRollElement.innerHTML = dice_roll
         game_state.dice_value = dice_roll
+        game_state.dice_rolled = true
+
+        if (dice_roll == 0) {
+            console.log('failed roll')
+            // Failed roll
+            game_state.player_turn = game_state.player_turn == 0 ? 1 : 0
+            game_state.dice_rolled = false
+            console.log(game_state)
+        }
     };
     scene.add(die);
 
@@ -508,7 +517,6 @@ function onDocumentMouseDown(event) {
             // If die and dice not rolled
             if (intersects[0].object.name == 'die' && !game_state.dice_rolled) {
                 intersects[0].object.callback();
-                game_state.dice_rolled = true
             }
 
             // If checker and is player's turn
