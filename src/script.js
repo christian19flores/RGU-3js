@@ -385,7 +385,7 @@ function init() {
         scene.add(game_state.player[1].checkers[i]);
     }
 
-    game_state.temporary_checker = new Checker(0, 100, 10, 0, 0)
+    game_state.temporary_checker = new Checker(0, 100, 10, 0, 0, 'holo')
     scene.add(game_state.temporary_checker);
 
     const dieGeometry = new THREE.TetrahedronGeometry(10, 0);
@@ -472,6 +472,25 @@ function onPointerMove(event) {
     pointer.y = - (event.clientY / window.innerHeight) * 2 + 1;
 }
 
+function isCapture(intersects) {
+    console.log(intersects.length)
+    console.log(intersects)
+    if (intersects[0].object.name == 'checker' && intersects[2].object.name == 'checker') {
+        if (intersects[0].object.player !== intersects[2].object.player) {
+            console.log('holo')
+            console.log('capture!')
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function putBackOnStack(object) {
+    // TODO: put back on stack instead of deleting it
+    scene.remove(object)
+}
+
 function onDocumentMouseDown(event) {
     event.preventDefault();
 
@@ -490,19 +509,35 @@ function onDocumentMouseDown(event) {
         if (game_state.selected_checker) {
             // SET NEW POSITION IF VALID
             if (isValidMove() && game_state.dice_rolled) {
-                console.log("valid move")
-                console.log(intersects[2])
-                console.log(intersects[2].object.board[game_state.player_turn].position)
-                // set checker new position
-                game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].position.x = intersects[0].object.position.x
-                game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].position.z = intersects[0].object.position.z
-                game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].board_position = intersects[2].object.board[game_state.player_turn].position
+                if (isCapture(intersects)) {
+                    console.log('capture')
+                    // remove captured checker
+                    putBackOnStack(intersects[0].object)
+                    // set checker new position
+                    game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].position.x = intersects[0].object.position.x
+                    game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].position.z = intersects[0].object.position.z
+                    game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].board_position = intersects[2].object.board[game_state.player_turn].position
 
-                // change player turn
-                game_state.player_turn = game_state.player_turn == 0 ? 1 : 0
+                    // change player turn
+                    game_state.player_turn = game_state.player_turn == 0 ? 1 : 0
 
-                // reset dice
-                game_state.dice_rolled = false
+                    // reset dice
+                    game_state.dice_rolled = false
+                } else {
+                    console.log("valid move")
+                    console.log(intersects)
+                    console.log(intersects[2].object.board[game_state.player_turn].position)
+                    // set checker new position
+                    game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].position.x = intersects[0].object.position.x
+                    game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].position.z = intersects[0].object.position.z
+                    game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].board_position = intersects[2].object.board[game_state.player_turn].position
+
+                    // change player turn
+                    game_state.player_turn = game_state.player_turn == 0 ? 1 : 0
+
+                    // reset dice
+                    game_state.dice_rolled = false
+                }
             }
 
             // unhide checker
@@ -590,11 +625,12 @@ function update() {
             INTERSECTED = intersects[0].object;
 
             // Move selected checker to box under mouse pointer
-            
+
             let selected_checker = game_state.selected_checker;
             console.log(selected_checker)
             if (selected_checker !== null && selected_checker.name == 'checker') {
                 console.log(selected_checker)
+                game_state.temporary_checker.color = game_state.player[selected_checker.player].color
                 game_state.temporary_checker.position.x = INTERSECTED.position.x
                 game_state.temporary_checker.position.z = INTERSECTED.position.z
                 game_state.temporary_checker.position.y = 10

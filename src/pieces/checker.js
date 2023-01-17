@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-export default function checker(x, y, z, player, count) {
+export default function checker(x, y, z, player, count, name = 'checker') {
     //const checker = new THREE.Group();
     const checkerGeometry = new THREE.CylinderGeometry(4, 4, 2, 32);
     const checkerMaterial = new THREE.MeshLambertMaterial({ color: player === 1 ? 0x0000ff : 0xff0000 });
@@ -10,7 +10,7 @@ export default function checker(x, y, z, player, count) {
     checkerMesh.position.y = y;
     checkerMesh.position.z = z;
     checkerMesh.player = player;
-    checkerMesh.name = 'checker';
+    checkerMesh.name = name;
     checkerMesh.index = count;
     checkerMesh.board_position = 0;
 
