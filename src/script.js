@@ -442,10 +442,6 @@ function init() {
 
         if (dice_roll == 0) {
             console.log('failed roll')
-            // // Failed roll
-            // game_state.player_turn = game_state.player_turn == 0 ? 1 : 0
-            // game_state.dice_rolled = false
-            // console.log(game_state)
             endTurn()
         }
     };
@@ -455,26 +451,7 @@ function init() {
 
     // Controls
     const controls = new OrbitControls(camera, canvas)
-    controls.listenToKeyEvents(window) // optional
-
-    // var gridXZ = new THREE.GridHelper(100, 10);
-    // gridXZ.setColors( new THREE.Color(0x006600), new THREE.Color(0x006600) );
-    // gridXZ.position.set( 0,0,0 );
-    // scene.add(gridXZ);
-
-    // var gridXY = new THREE.GridHelper(100, 10);
-    // gridXY.position.set( 100,100,0 );
-    // gridXY.rotation.x = Math.PI/2;
-    // gridXY.setColors( new THREE.Color(0x000066), new THREE.Color(0x000066) );
-    // scene.add(gridXY);
-
-    // var gridYZ = new THREE.GridHelper(100, 10);
-    // gridYZ.position.set( 0,100,100 );
-    // gridYZ.rotation.z = Math.PI/2;
-    // gridYZ.setColors( new THREE.Color(0x660000), new THREE.Color(0x660000) );
-    // scene.add(gridYZ);
-
-    // stats = new Stats();
+    controls.listenToKeyEvents(window)
 
 
 
@@ -508,6 +485,129 @@ function onPointerMove(event) {
     pointer.y = - (event.clientY / window.innerHeight) * 2 + 1;
 }
 
+function onDocumentMouseDown(event) {
+    event.preventDefault();
+
+    console.log('click')
+
+    mouse.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
+    mouse.y = - (event.clientY / renderer.domElement.clientHeight) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+
+    var intersects = raycaster.intersectObjects(scene.children, true);
+
+    if (intersects.length > 0) {
+        if (game_state.selected_checker) {
+            // SET NEW POSITION IF VALID
+            if (isValidMove() && game_state.dice_rolled) {
+                if (isCapture(intersects)) {
+                    console.log('capture')
+                    // remove captured checker
+                    putBackOnStack(intersects[0].object)
+                    // set checker new position
+                    moveChecker(intersects[0].object.position.x, intersects[0].object.position.y, intersects[0].object.position.z, intersects[3].object.board[game_state.player_turn].position)
+                } else {
+                    if (isScore(intersects)) {
+                        scene.remove(game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index])
+                    } else {
+                        console.log("valid move")
+                        // set checker new position
+                        moveChecker(intersects[0].object.position.x, intersects[0].object.position.y, intersects[0].object.position.z, intersects[2].object.board[game_state.player_turn].position)
+                    }
+                }
+
+                if (intersects[2].object.extraMove && game_state.allowExtraMove) {
+                    extraMove()
+                } else {
+                    endTurn()
+                }
+            }
+
+            // unhide checker
+            game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].position.y = 10
+            game_state.selected_checker = null;
+            for (let i = 0; i < game_state.predicted_moves.length; i++) {
+                scene.remove(game_state.predicted_moves[i])
+            }
+            game_state.predicted_moves = []
+            game_state.temporary_checker.position.y = 100
+        } else {
+            // If die not rolled, then roll die
+            if (intersects[0].object.name == 'die' && !game_state.dice_rolled) {
+                intersects[0].object.callback();
+            }
+
+            // If checker and is player's turn
+            if (intersects[0].object.name == 'checker' && game_state.dice_rolled) {
+                if (intersects[0].object.player == game_state.player_turn) {
+                    predictMove(intersects[0].object.board_position)
+                    game_state.selected_checker = {
+                        player: intersects[0].object.player,
+                        index: intersects[0].object.index,
+                        name: intersects[0].object.name,
+                        board_position: intersects[0].object.board_position,
+                        //cube_position: intersects[1].object.board[game_state.player_turn].position,
+                    }
+
+                    // hide selected checker
+                    game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].position.y = 5
+                } else {
+                    console.log('not your turn')
+                }
+            }
+        }
+
+
+    }
+}
+
+function update() {
+    raycaster = new THREE.Raycaster();
+
+    raycaster.setFromCamera(pointer, camera);
+
+    const intersects = raycaster.intersectObjects(scene.children, false);
+
+    if (intersects.length > 0) {
+        if (INTERSECTED != intersects[0].object && intersects[0].object.name != 'die') {
+
+            // if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
+
+            INTERSECTED = intersects[0].object;
+
+            // Move selected checker to box under mouse pointer
+
+            let selected_checker = game_state.selected_checker;
+            console.log(selected_checker)
+            if (selected_checker !== null && selected_checker.name == 'checker') {
+                game_state.temporary_checker.position.x = INTERSECTED.position.x
+                game_state.temporary_checker.position.z = INTERSECTED.position.z
+                game_state.temporary_checker.position.y = 10
+            }
+
+        }
+    }
+
+    stats.update();
+}
+
+function render() {
+
+    renderer.render(scene, camera);
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    render();
+    update();
+}
+
+function putBackOnStack(object) {
+    // TODO: put back on stack instead of deleting it
+    scene.remove(object)
+}
+
 function isCapture(intersects) {
     console.log(intersects.length)
     console.log(intersects)
@@ -536,11 +636,6 @@ function isScore(intersects) {
     return false;
 }
 
-function putBackOnStack(object) {
-    // TODO: put back on stack instead of deleting it
-    scene.remove(object)
-}
-
 function endTurn() {
     // change player turn
     game_state.player_turn = game_state.player_turn == 0 ? 1 : 0
@@ -567,107 +662,14 @@ function extraMove() {
     return false;
 }
 
-function onDocumentMouseDown(event) {
-    event.preventDefault();
+function moveChecker(x, y, z, position) {
+    // moves player checker to new x,z position
+    game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].position.x = x
+    game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].position.y = y
+    game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].position.z = z
 
-    console.log('click')
-
-    mouse.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
-    mouse.y = - (event.clientY / renderer.domElement.clientHeight) * 2 + 1;
-
-    raycaster.setFromCamera(mouse, camera);
-
-    var intersects = raycaster.intersectObjects(scene.children, true);
-
-    if (intersects.length > 0) {
-        console.log(intersects[0].object)
-
-        if (game_state.selected_checker) {
-            // SET NEW POSITION IF VALID
-            if (isValidMove() && game_state.dice_rolled) {
-                if (isCapture(intersects)) {
-                    console.log('capture')
-                    // remove captured checker
-                    putBackOnStack(intersects[0].object)
-                    // set checker new position
-                    game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].position.x = intersects[0].object.position.x
-                    game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].position.z = intersects[0].object.position.z
-                    game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].board_position = intersects[2].object.board[game_state.player_turn].position
-
-                    // // change player turn
-                    // game_state.player_turn = game_state.player_turn == 0 ? 1 : 0
-
-                    // // reset dice
-                    // game_state.dice_rolled = false
-
-                } else {
-                    if (isScore(intersects)) {
-                        scene.remove(game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index])
-                    } else {
-                        console.log("valid move")
-                        console.log(intersects)
-                        console.log(intersects[2].object.board[game_state.player_turn].position)
-                        // set checker new position
-                        game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].position.x = intersects[0].object.position.x
-                        game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].position.z = intersects[0].object.position.z
-                        game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].board_position = intersects[2].object.board[game_state.player_turn].position
-                    }
-
-
-
-                    // // change player turn
-                    // game_state.player_turn = game_state.player_turn == 0 ? 1 : 0
-
-                    // // reset dice
-                    // game_state.dice_rolled = false
-                }
-
-                // // change temp checker color
-                // console.log(game_state.temporary_checker)
-                // game_state.temporary_checker.material.color.setHex(player_colors[game_state.player_turn == 0 ? 1 : 0])
-                if (intersects[2].object.extraMove && game_state.allowExtraMove) {
-                    extraMove()
-                } else {
-                    endTurn()
-                }
-            }
-
-            // unhide checker
-            game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].position.y = 10
-            game_state.selected_checker = null;
-            for (let i = 0; i < game_state.predicted_moves.length; i++) {
-                scene.remove(game_state.predicted_moves[i])
-            }
-            game_state.predicted_moves = []
-            game_state.temporary_checker.position.y = 100
-        } else {
-            // If die and dice not rolled
-            if (intersects[0].object.name == 'die' && !game_state.dice_rolled) {
-                intersects[0].object.callback();
-            }
-
-            // If checker and is player's turn
-            if (intersects[0].object.name == 'checker' && game_state.dice_rolled) {
-                if (intersects[0].object.player == game_state.player_turn) {
-                    predictMove(intersects[0].object.board_position)
-                    game_state.selected_checker = {
-                        player: intersects[0].object.player,
-                        index: intersects[0].object.index,
-                        name: intersects[0].object.name,
-                        board_position: intersects[0].object.board_position,
-                        //cube_position: intersects[1].object.board[game_state.player_turn].position,
-                    }
-
-                    // hide selected checker
-                    game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].position.y = 5
-                } else {
-                    console.log('not your turn')
-                }
-            }
-        }
-
-
-    }
+    // update player checker board index
+    game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].board_position = position
 }
 
 function isValidMove() {
@@ -701,50 +703,3 @@ function predictMove(currentPosition) {
 
     return allowedMoves
 }
-
-function update() {
-    raycaster = new THREE.Raycaster();
-
-    raycaster.setFromCamera(pointer, camera);
-
-    const intersects = raycaster.intersectObjects(scene.children, false);
-
-    if (intersects.length > 0) {
-        if (INTERSECTED != intersects[0].object && intersects[0].object.name != 'die') {
-
-            if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
-
-            INTERSECTED = intersects[0].object;
-
-            // Move selected checker to box under mouse pointer
-
-            let selected_checker = game_state.selected_checker;
-            console.log(selected_checker)
-            if (selected_checker !== null && selected_checker.name == 'checker') {
-                game_state.temporary_checker.position.x = INTERSECTED.position.x
-                game_state.temporary_checker.position.z = INTERSECTED.position.z
-                game_state.temporary_checker.position.y = 10
-            }
-
-        }
-    } else {
-        if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
-
-        INTERSECTED = null;
-    }
-
-    stats.update();
-}
-
-function render() {
-
-    renderer.render(scene, camera);
-}
-
-function animate() {
-    requestAnimationFrame(animate);
-    render();
-    update();
-}
-
-
