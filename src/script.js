@@ -22,18 +22,21 @@ var mouse = new THREE.Vector2();
 const radius = 100;
 
 let game_state = {
+    allowExtraMove: true,
     player_turn: 0,
     dice_rolled: false,
-    dice_value: 2,
+    dice_value: 0,
     selected_checker: null,
     player: [
         {
-            points: 0,
+            pointElement: document.getElementById('player1-points'),
+            score: 0,
             checkers: []
 
         },
         {
-            points: 0,
+            pointElement: document.getElementById('player2-points'),
+            score: 0,
             checkers: []
 
         }
@@ -68,7 +71,7 @@ const boardCubes = [
         position: { x: 30, y: 5, z: -10 },
         color: boxMaterial3,
         safe: true,
-        extraMove: false,
+        extraMove: true,
         board: [
             {
                 position: null
@@ -525,6 +528,8 @@ function isCapture(intersects) {
 function isScore(intersects) {
     if (intersects[2].object.board[game_state.player_turn].position == 15) {
         console.log('score!')
+        game_state.player[game_state.player_turn].score = game_state.player[game_state.player_turn].score + 1
+        game_state.player[game_state.player_turn].pointElement.innerHTML = game_state.player[game_state.player_turn].score
         return true;
     }
 
@@ -543,8 +548,23 @@ function endTurn() {
     // reset dice
     game_state.dice_rolled = false
 
+    // reset extra move
+    game_state.allowExtraMove = true
+
     // change holo checker color
     game_state.temporary_checker.material.color.setHex(player_colors[game_state.player_turn == 0 ? 1 : 0])
+}
+
+function extraMove() {
+    // check if player has extra move
+    if (game_state.allowExtraMove) {
+        console.log('extra move')
+        game_state.dice_rolled = false
+        game_state.allowExtraMove = false
+        return true;
+    }
+
+    return false;
 }
 
 function onDocumentMouseDown(event) {
@@ -605,7 +625,11 @@ function onDocumentMouseDown(event) {
                 // // change temp checker color
                 // console.log(game_state.temporary_checker)
                 // game_state.temporary_checker.material.color.setHex(player_colors[game_state.player_turn == 0 ? 1 : 0])
-                endTurn()
+                if (intersects[2].object.extraMove && game_state.allowExtraMove) {
+                    extraMove()
+                } else {
+                    endTurn()
+                }
             }
 
             // unhide checker
