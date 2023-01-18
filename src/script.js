@@ -278,7 +278,7 @@ const boardCubes = [
                 position: 13
             },
             {
-                position: 13
+                position: null
             }
         ]
     },
