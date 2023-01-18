@@ -12,6 +12,7 @@ let container, stats;
 let camera, scene, raycaster, renderer, canvas;
 let checker, die;
 let diceRollElement = document.getElementById('dice-roll');
+let player_colors = [0x0000ff, 0xff0000];
 
 let INTERSECTED;
 let theta = 0;
@@ -45,6 +46,7 @@ const boxMaterial1 = new THREE.MeshLambertMaterial({ color: 0xc8c8c8 });
 const boxMaterial2 = new THREE.MeshLambertMaterial({ color: 0x333333 });
 const boxMaterial3 = new THREE.MeshLambertMaterial({ color: 0xff0000 });
 const boxMaterial4 = new THREE.MeshLambertMaterial({ color: 0xff00ff });
+const boxMaterial5 = new THREE.MeshLambertMaterial({ color: 0x00ff00 });
 
 const boardCubes = [
     // First Row
@@ -76,6 +78,21 @@ const boardCubes = [
             }
         ]
     },
+    {
+        position: { x: 20, y: 5, z: -10 },
+        color: boxMaterial5,
+        safe: true,
+        extraMove: false,
+        board: [
+            {
+                position: null
+            },
+            {
+                position: 15
+            }
+        ]
+    },
+
     {
         position: { x: 0, y: 5, z: -10 },
         color: boxMaterial2,
@@ -277,6 +294,20 @@ const boardCubes = [
         ]
     },
     {
+        position: { x: 20, y: 5, z: 10 },
+        color: boxMaterial5,
+        safe: true,
+        extraMove: false,
+        board: [
+            {
+                position: 15
+            },
+            {
+                position: null
+            }
+        ]
+    },
+    {
         position: { x: 0, y: 5, z: 10 },
         color: boxMaterial2,
         safe: true,
@@ -397,7 +428,8 @@ function init() {
     die.position.y = 10;
     die.position.z = -40;
 
-    die.callback = () => {
+    die.callback = function (event) {
+        console.log(this.name)
         console.log('clicked die')
         let dice_roll = rollDice()
         console.log(dice_roll)
@@ -407,10 +439,11 @@ function init() {
 
         if (dice_roll == 0) {
             console.log('failed roll')
-            // Failed roll
-            game_state.player_turn = game_state.player_turn == 0 ? 1 : 0
-            game_state.dice_rolled = false
-            console.log(game_state)
+            // // Failed roll
+            // game_state.player_turn = game_state.player_turn == 0 ? 1 : 0
+            // game_state.dice_rolled = false
+            // console.log(game_state)
+            endTurn()
         }
     };
     scene.add(die);
@@ -475,12 +508,24 @@ function onPointerMove(event) {
 function isCapture(intersects) {
     console.log(intersects.length)
     console.log(intersects)
+
     if (intersects[0].object.name == 'checker' && intersects[2].object.name == 'checker') {
-        if (intersects[0].object.player !== intersects[2].object.player) {
-            console.log('holo')
-            console.log('capture!')
-            return true;
+        if (intersects[3].object.board[game_state.player_turn].position !== 8) {
+            if (intersects[0].object.player !== intersects[2].object.player) {
+                console.log('holo')
+                console.log('capture!')
+                return true;
+            }
         }
+    }
+
+    return false;
+}
+
+function isScore(intersects) {
+    if (intersects[2].object.board[game_state.player_turn].position == 15) {
+        console.log('score!')
+        return true;
     }
 
     return false;
@@ -489,6 +534,17 @@ function isCapture(intersects) {
 function putBackOnStack(object) {
     // TODO: put back on stack instead of deleting it
     scene.remove(object)
+}
+
+function endTurn() {
+    // change player turn
+    game_state.player_turn = game_state.player_turn == 0 ? 1 : 0
+
+    // reset dice
+    game_state.dice_rolled = false
+
+    // change holo checker color
+    game_state.temporary_checker.material.color.setHex(player_colors[game_state.player_turn == 0 ? 1 : 0])
 }
 
 function onDocumentMouseDown(event) {
@@ -518,26 +574,38 @@ function onDocumentMouseDown(event) {
                     game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].position.z = intersects[0].object.position.z
                     game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].board_position = intersects[2].object.board[game_state.player_turn].position
 
-                    // change player turn
-                    game_state.player_turn = game_state.player_turn == 0 ? 1 : 0
+                    // // change player turn
+                    // game_state.player_turn = game_state.player_turn == 0 ? 1 : 0
 
-                    // reset dice
-                    game_state.dice_rolled = false
+                    // // reset dice
+                    // game_state.dice_rolled = false
+
                 } else {
-                    console.log("valid move")
-                    console.log(intersects)
-                    console.log(intersects[2].object.board[game_state.player_turn].position)
-                    // set checker new position
-                    game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].position.x = intersects[0].object.position.x
-                    game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].position.z = intersects[0].object.position.z
-                    game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].board_position = intersects[2].object.board[game_state.player_turn].position
+                    if (isScore(intersects)) {
+                        scene.remove(game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index])
+                    } else {
+                        console.log("valid move")
+                        console.log(intersects)
+                        console.log(intersects[2].object.board[game_state.player_turn].position)
+                        // set checker new position
+                        game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].position.x = intersects[0].object.position.x
+                        game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].position.z = intersects[0].object.position.z
+                        game_state.player[game_state.selected_checker.player].checkers[game_state.selected_checker.index].board_position = intersects[2].object.board[game_state.player_turn].position
+                    }
 
-                    // change player turn
-                    game_state.player_turn = game_state.player_turn == 0 ? 1 : 0
 
-                    // reset dice
-                    game_state.dice_rolled = false
+
+                    // // change player turn
+                    // game_state.player_turn = game_state.player_turn == 0 ? 1 : 0
+
+                    // // reset dice
+                    // game_state.dice_rolled = false
                 }
+
+                // // change temp checker color
+                // console.log(game_state.temporary_checker)
+                // game_state.temporary_checker.material.color.setHex(player_colors[game_state.player_turn == 0 ? 1 : 0])
+                endTurn()
             }
 
             // unhide checker
@@ -629,8 +697,6 @@ function update() {
             let selected_checker = game_state.selected_checker;
             console.log(selected_checker)
             if (selected_checker !== null && selected_checker.name == 'checker') {
-                console.log(selected_checker)
-                game_state.temporary_checker.color = game_state.player[selected_checker.player].color
                 game_state.temporary_checker.position.x = INTERSECTED.position.x
                 game_state.temporary_checker.position.z = INTERSECTED.position.z
                 game_state.temporary_checker.position.y = 10
