@@ -2,24 +2,18 @@ import './style.css'
 import * as THREE from 'three'
 import Stats from 'three/examples/jsm/libs/stats.module.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import * as dat from 'lil-gui'
-import Board from './pieces/board.js'
 import Checker from './pieces/checker.js'
 import PredictionChecker from './pieces/predictionChecker.js'
 import { rollDice } from './helpers/game_actions'
 
-let container, stats;
+let stats;
 let camera, scene, raycaster, renderer, canvas;
-let checker, die;
 let diceRollElement = document.getElementById('dice-roll');
 let player_colors = [0x0000ff, 0xff0000];
 
 let INTERSECTED;
-let theta = 0;
-
 var pointer = new THREE.Vector2();
 var mouse = new THREE.Vector2();
-const radius = 100;
 
 let game_state = {
     allowExtraMove: true,
@@ -440,10 +434,10 @@ function init() {
         game_state.dice_value = dice_roll
         game_state.dice_rolled = true
 
-        if (dice_roll == 0) {
-            console.log('failed roll')
-            endTurn()
-        }
+        // if (dice_roll == 0) {
+        //     console.log('failed roll')
+        //     endTurn()
+        // }
     };
     scene.add(die);
 
@@ -536,12 +530,21 @@ function onDocumentMouseDown(event) {
             // If die not rolled, then roll die
             if (intersects[0].object.name == 'die' && !game_state.dice_rolled) {
                 intersects[0].object.callback();
+
+                if (isAvailableMoves()) {
+                    console.log('available moves')
+
+                } else {
+                    console.log('no available moves')
+                    endTurn()
+                }
             }
 
             // If checker and is player's turn
             if (intersects[0].object.name == 'checker' && game_state.dice_rolled) {
                 if (intersects[0].object.player == game_state.player_turn) {
                     predictMove(intersects[0].object.board_position)
+
                     game_state.selected_checker = {
                         player: intersects[0].object.player,
                         index: intersects[0].object.index,
@@ -680,6 +683,32 @@ function isValidMove() {
     }
 }
 
+function isAvailableMoves() {
+    let player_turn = game_state.player_turn
+    let unmoveable_spots = []
+    // build array of unmoveable spots, these are spots that are occupied by player's own checkers
+    for (let i = 0; i < game_state.player[player_turn].checkers.length; i++) {
+        unmoveable_spots.push(game_state.player[player_turn].checkers[i].board_position)
+    }
+
+    // loop through all player checkers
+    for (let i = 0; i < game_state.player[player_turn].checkers.length; i++) {
+        // check if each checker has a possible move
+        let currentPosition = game_state.player[player_turn].checkers[i].board_position
+        console.log(currentPosition)
+
+
+        // Loop through all cubes, to find all available moves
+        for (let i = 0; i < boardCubes.length; i++) {
+            if (boardCubes[i].board[player_turn].position == (currentPosition + game_state.dice_value) && !unmoveable_spots.includes(boardCubes[i].board[player_turn].position)) {
+                console.log('available move')
+                return true;
+            }
+        }
+
+    }
+}
+
 function predictMove(currentPosition) {
     console.log(currentPosition)
     console.log(game_state.player_turn)
@@ -701,5 +730,10 @@ function predictMove(currentPosition) {
         scene.add(game_state.predicted_moves[i])
     }
 
-    return allowedMoves
+    if (allowedMoves.length == 0) {
+        console.log('No moves available')
+        return false;
+    }
+
+    return true
 }
