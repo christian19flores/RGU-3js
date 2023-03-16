@@ -37,10 +37,10 @@ The objective of the game is to move all of your pieces around the board and off
 
 Red player moves this way: </br>
 → → → → → → → ↓</br>
-↑← ← ←  ← ← ← ←</br>
+↑← ← ←&nbsp;&nbsp;← ← ← ←</br>
 
 Blue player moves this way:</br>
-↓← ← ←  ← ← ← ←</br>
+↓← ← ←&nbsp;&nbsp;← ← ← ←</br>
 → → → → → → → ↑</br>            
 
 
