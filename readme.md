@@ -35,16 +35,16 @@ The objective of the game is to move all of your pieces around the board and off
 6. Landing on a red square rewards an extra move.
 7. Landing on the purple square means that piece can not be captured as well as an extra move is rewarded.
 
-Red player moves this way:
-→ → → → → → → ↓                       
-↑← ← ←  ← ← ← ←
+Red player moves this way: </br>
+→ → → → → → → ↓</br>       
+↑← ← ←  ← ← ← ←</br>
 
-Blue player moves this way:
-↓← ← ←  ← ← ← ←
-→ → → → → → → ↑                     
+Blue player moves this way:</br>
+↓← ← ←  ← ← ← ←</br>
+→ → → → → → → ↑</br>            
 
 
-###Missing Features:
+### Missing Features:
 - Object glow to show player move
 - Score board redesign
 - Animated die roll
