@@ -36,7 +36,7 @@ The objective of the game is to move all of your pieces around the board and off
 7. Landing on the purple square means that piece can not be captured as well as an extra move is rewarded.
 
 Red player moves this way: </br>
-→ → → → → → → ↓</br>       
+→ → → → → → → ↓</br>
 ↑← ← ←  ← ← ← ←</br>
 
 Blue player moves this way:</br>
