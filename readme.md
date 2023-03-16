@@ -1,5 +1,7 @@
 # RGU-3js
 
+![](RGU.png?raw=true)
+
 ## Setup
 Download [Node.js](https://nodejs.org/en/download/).
 Run this followed commands:
@@ -50,3 +52,4 @@ Blue player moves this way:</br>
 - Animated die roll
 - Hide placeholder piece when not in use
 - Return jumped piece to stack
+- Lacks general aesthetic
