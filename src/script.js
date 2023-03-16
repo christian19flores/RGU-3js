@@ -433,11 +433,6 @@ function init() {
         diceRollElement.innerHTML = dice_roll
         game_state.dice_value = dice_roll
         game_state.dice_rolled = true
-
-        // if (dice_roll == 0) {
-        //     console.log('failed roll')
-        //     endTurn()
-        // }
     };
     scene.add(die);
 
@@ -491,6 +486,7 @@ function onDocumentMouseDown(event) {
 
     var intersects = raycaster.intersectObjects(scene.children, true);
 
+    // Logic for mouse clicks
     if (intersects.length > 0) {
         if (game_state.selected_checker) {
             // SET NEW POSITION IF VALID
@@ -550,7 +546,6 @@ function onDocumentMouseDown(event) {
                         index: intersects[0].object.index,
                         name: intersects[0].object.name,
                         board_position: intersects[0].object.board_position,
-                        //cube_position: intersects[1].object.board[game_state.player_turn].position,
                     }
 
                     // hide selected checker
@@ -575,12 +570,9 @@ function update() {
     if (intersects.length > 0) {
         if (INTERSECTED != intersects[0].object && intersects[0].object.name != 'die') {
 
-            // if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
-
             INTERSECTED = intersects[0].object;
 
             // Move selected checker to box under mouse pointer
-
             let selected_checker = game_state.selected_checker;
             console.log(selected_checker)
             if (selected_checker !== null && selected_checker.name == 'checker') {
